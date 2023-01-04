@@ -100,7 +100,6 @@ window.addEventListener('DOMContentLoaded',function(){
     //Modal
 
     const modalTabBtn = document.querySelectorAll('[data-modal]');
-    const modalTabClose = document.querySelector('[data-close]');
     const modalTab = document.querySelector('.modal');
     
     
@@ -116,10 +115,9 @@ window.addEventListener('DOMContentLoaded',function(){
         modalTab.style.display = 'none';
         document.body.style.overflow = '';     
     }
-    modalTabClose.addEventListener('click',modalClose)
     
     modalTab.addEventListener('click', function(EO){
-        if(EO.target === modalTab){
+        if(EO.target === modalTab || EO.target.getAttribute('data-close')=='close'){
             modalClose();    
         }
     })
@@ -194,5 +192,106 @@ window.addEventListener('DOMContentLoaded',function(){
         0.5,
         '.menu .container'
     ).render();
+
+    //Forms
+
+    const forms = document.querySelectorAll('form');
+
+    const massage ={
+        loading: 'Загрузка',
+        success: 'Спасибо! С вами свяжутся в ближайшее время',
+        failure: 'Ошибка!'        
+    }
+
+    forms.forEach(item =>{
+        postData(item);
+    })
+
+    function postData(form){
+        form.addEventListener('submit',(e) =>{
+            e.preventDefault();
+
+            const statusMassage = document.createElement('div');
+            statusMassage.classList.add('status');
+            statusMassage.textContent = massage.loading;
+            form.append(statusMassage);
+
+           
+
+
+            const formData = new FormData(form);
+            const obj ={};
+            formData.forEach(function(value,key){
+                obj[key] = value;
+            });
+
+            fetch('server1.php',{
+                method: 'POST',
+                headers:{
+                    'Content-type':'application/json'    
+                },
+                body: JSON.stringify(obj)   
+            }).then(data => data.text())
+            .then(data => {
+                console.log(data)
+                showThanksModal(massage.success);
+                form.reset();
+                statusMassage.remove();
+            }).catch(() =>{
+                showThanksModal(massage.failure);
+                form.reset();
+                statusMassage.remove();    
+            }).finally(() =>{
+                form.reset();
+            })  
+
+            // request.addEventListener('load',()=>{
+            //     if(request.status === 200){
+            //         console.log(request.response)
+            //         showThanksModal(massage.success);
+            //         form.reset();
+            //         statusMassage.remove();
+            //     } else {
+            //         showThanksModal(massage.failure);
+            //         form.reset();
+            //         statusMassage.remove();
+            //     }
+            // })
+        })
+    }
+
+    function showThanksModal(massage){
+        const prevModalDialog = document.querySelector('.modal__dialog');
+
+        prevModalDialog.classList.add('hide');
+        modalOpen();
+
+        const thanksModal = document.createElement('div');
+        thanksModal.classList.add('modal__dialog');
+        thanksModal.innerHTML = `
+            <div class="modal__content">
+                <div class =  "modal__close">×</div> 
+                <div class = "modal__title">${massage}</div>
+            </div>
+        `;
+        document.querySelector('.modal').append(thanksModal);
+        setTimeout(()=>{
+            thanksModal.remove();
+            prevModalDialog.classList.add('show');
+            prevModalDialog.classList.remove('hide');
+            modalClose();
+        },2000)
+    }
+
+    // fetch('https://jsonplaceholder.typicode.com/posts',
+    // {
+    //     method: "POST",
+    //     body: JSON.stringify({name: 'Antomos'}),
+    //     headers:{
+    //         'Content-type': 'application/json'
+    //     }
+    // })
+    //   .then(response => response.json()) //ответ
+    //   .then(json => console.log(json))
 
 })
